@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>4x4 Registreerimine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+body{margin:0}img{max-width:100%}
+/* Layout: üks kitsas tööveerg; ülal võistlusnumbri "numbritahvel", all vormi plokid */
+:root{
+  --bg:#f2f3ee; --surface:#ffffff; --fg:#1d2219; --muted:#5d6656; --line:#d5d9cc;
+  --accent:#4b6a2a; --accent-fg:#ffffff; --plate:#f2c230; --plate-fg:#15170f;
+  --ok:#2f7d3a; --err:#b3261e; --warn-bg:#fff4cc; --warn-fg:#5a4500;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141712; --surface:#1d211a; --fg:#e7eadf; --muted:#9aa38f; --line:#353b2f;
+  --accent:#8fb35a; --accent-fg:#10140c; --plate:#e7b923; --plate-fg:#15170f;
+  --ok:#6cc27a; --err:#ff8a80; --warn-bg:#3a3214; --warn-fg:#f1dc95; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141712; --surface:#1d211a; --fg:#e7eadf; --muted:#9aa38f; --line:#353b2f;
+  --accent:#8fb35a; --accent-fg:#10140c; --plate:#e7b923; --plate-fg:#15170f;
+  --ok:#6cc27a; --err:#ff8a80; --warn-bg:#3a3214; --warn-fg:#f1dc95; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:760px;margin:0 auto;display:grid;gap:20px}
+header{display:flex;justify-content:flex-end}
+.hero{position:relative;border:3px solid #1d2219;border-radius:12px;overflow:hidden;aspect-ratio:800/320;max-width:100%;background:#9fd3ea}
+.hero svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero-text{position:relative;padding:18px 20px;max-width:440px}
+.hero-text h1{color:#1d2219;font-size:clamp(24px,4.2vw,36px)}
+.hero-text .sub{color:#2c3a24;font-weight:600}
+@media (max-width:560px){.hero{aspect-ratio:auto;height:270px;background:#bfe4f3}.hero-text{padding:14px}}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,6vw,44px);line-height:1;margin:0;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:6px 0 0}
+.lang{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--fg);font:600 14px var(--f-body);padding:6px 12px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.demo{background:var(--warn-bg);color:var(--warn-fg);border-radius:6px;padding:10px 14px;font-size:14px}
+nav.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line)}
+nav.tabs button{border:0;background:none;color:var(--muted);font:600 15px var(--f-body);padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+nav.tabs button[aria-selected="true"]{color:var(--fg);border-color:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;display:grid;gap:20px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice button{border:2px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:16px;text-align:left;cursor:pointer;font:inherit}
+.choice button strong{display:block;font-family:var(--f-display);font-size:22px;text-transform:uppercase;letter-spacing:.02em}
+.choice button span{color:var(--muted);font-size:14px}
+.choice button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+fieldset{border:0;margin:0;padding:0;display:grid;gap:14px}
+legend{font-family:var(--f-display);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.full{grid-column:1/-1}
+label{display:grid;gap:4px;font-weight:500;font-size:14px;align-content:start}
+[hidden]{display:none!important}
+#reg,#lookup{display:grid;gap:28px}
+.num{font-variant-numeric:tabular-nums}
+label .req{color:var(--err)}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%;min-width:0}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--err)}
+.mono{font-variant-numeric:tabular-nums;letter-spacing:.04em;text-transform:uppercase}
+.hint{color:var(--muted);font-size:13px;font-weight:400}
+.checks{display:grid;gap:6px}.checks .lbl{font-weight:500;font-size:14px}
+.checkrow{display:flex;flex-wrap:wrap;gap:10px}
+.check{display:flex;grid-template-columns:none;gap:8px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:9px 12px;background:var(--bg);cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.check:has(input:checked){border-color:var(--accent)}
+.numrow{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.plate{width:118px;aspect-ratio:4/3;max-width:100%;background:var(--plate);color:var(--plate-fg);border:3px solid var(--plate-fg);border-radius:10px;
+  display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:56px;line-height:1;font-variant-numeric:tabular-nums}
+.plate.empty{opacity:.45}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{border:0;border-radius:6px;background:var(--accent);color:var(--accent-fg);font:600 16px var(--f-body);padding:11px 20px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.msg{font-size:14px}
+.msg.err{color:var(--err)} .msg.ok{color:var(--ok)}
+.done{text-align:center;display:grid;gap:12px;justify-items:center}
+.done h2{font-family:var(--f-display);text-transform:uppercase;font-size:30px;margin:0}
+.done p{margin:0;max-width:52ch}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:14px;color:var(--muted)}
+td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
+.count{color:var(--muted);font-size:14px}
+@media (max-width:560px){.grid,.choice{grid-template-columns:1fr}.numrow{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="lang" role="group" aria-label="Keel / Language">
+      <button id="lang-et" type="button" aria-pressed="true">ET</button>
+      <button id="lang-en" type="button" aria-pressed="false">EN</button>
+    </div>
+  </header>
+  <div class="hero">
+    <svg viewBox="0 0 800 320" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+      <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd3ea"/><stop offset="1" stop-color="#e6f5fb"/></linearGradient></defs>
+      <rect width="800" height="320" fill="url(#sky)"/>
+      <g stroke="#1d2219" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+        <circle cx="690" cy="62" r="30" fill="#ffd23f"/>
+        <path d="M560 70q8-22 30-16q10-18 32-6q20-4 22 14q16 4 8 18h-88q-14-2-4-10z" fill="#fff"/>
+        <path d="M420 40q6-16 24-12q10-14 28-4q18-2 18 12q12 4 4 14h-70q-12-2-4-10z" fill="#fff"/>
+        <g transform="translate(0,60)">
+          <path d="M0 170Q120 90 260 150T520 120T800 110V260H0Z" fill="#9cc163"/>
+          <path d="M0 200Q160 150 330 185T800 150V260H0Z" fill="#6f9a3e"/>
+          <path d="M120 150l6-12 5 12M140 152l5-10 4 10M610 120l6-13 5 13M630 122l5-10 4 10" fill="none" stroke-width="2.5"/>
+          <path d="M0 260V215Q150 196 300 210L420 205L720 152Q770 143 800 140V260Z" fill="#7a5230"/>
+          <path d="M60 232q20-8 40 0M200 240q25-8 50 0M330 228q20-6 40 0" fill="none" stroke="#5a3a1f" stroke-width="3"/>
+          <g fill="none" stroke-width="4"><path d="M330 120h70M300 140h80M340 160h50"/></g>
+          <g fill="#6b4524"><circle cx="410" cy="150" r="9"/><circle cx="388" cy="128" r="6"/><circle cx="430" cy="118" r="5"/><path d="M440 185q-30-10-36 10q20 8 36-10z"/><circle cx="372" cy="170" r="5"/></g>
+          <g transform="translate(430 73) rotate(-10)">
+            <rect x="52" y="-14" width="118" height="8" rx="2" fill="#3a3f35"/>
+            <rect x="70" y="-30" width="34" height="16" rx="3" fill="#4b6a2a"/>
+            <circle cx="135" cy="-24" r="12" fill="#2b2b2b"/>
+            <rect x="118" y="-8" width="58" height="8" rx="3" fill="#ffd23f"/>
+            <path d="M44 40L62 -4H168L190 40Z" fill="#e2542e"/>
+            <path d="M70 4H112V36H58ZM120 4H162L176 36H120Z" fill="#cdeefa"/>
+            <path d="M76 10l10 16M130 10l8 14" fill="none" stroke="#fff" stroke-width="4"/>
+            <rect x="0" y="36" width="236" height="52" rx="12" fill="#e2542e"/>
+            <rect x="186" y="-6" width="9" height="56" rx="3" fill="#3a3f35"/>
+            <rect x="226" y="62" width="22" height="24" rx="4" fill="#3a3f35"/>
+            <rect x="96" y="46" width="48" height="34" rx="6" fill="#ffd23f"/>
+            <text x="120" y="72" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="800" font-size="26" fill="#1d2219" stroke="none">4x4</text>
+            <circle cx="232" cy="50" r="7" fill="#fff6c2"/>
+            <path d="M18 88q12 16 30 4M160 88q14 16 34 4" fill="#6b4524"/>
+            <g><circle cx="45" cy="95" r="34" fill="#262626"/><circle cx="45" cy="95" r="30" fill="none" stroke="#555" stroke-width="6" stroke-dasharray="6 7"/><circle cx="45" cy="95" r="13" fill="#b9bdb2"/><circle cx="45" cy="95" r="4" fill="#1d2219"/></g>
+            <g><circle cx="190" cy="95" r="34" fill="#262626"/><circle cx="190" cy="95" r="30" fill="none" stroke="#555" stroke-width="6" stroke-dasharray="6 7"/><circle cx="190" cy="95" r="13" fill="#b9bdb2"/><circle cx="190" cy="95" r="4" fill="#1d2219"/></g>
+          </g>
+        </g>
+      </g>
+    </svg>
+    <div class="hero-text"><h1 data-i18n="title"></h1><p class="sub" data-i18n="subtitle"></p></div>
+  </div>
+
+  <div class="demo" id="demo-banner" data-i18n="demo"></div>
+
+  <nav class="tabs" role="tablist">
+    <button id="tab-form" role="tab" aria-selected="true" data-i18n="tabForm"></button>
+    <button id="tab-list" role="tab" aria-selected="false" data-i18n="tabList"></button>
+  </nav>
+
+  <!-- VORM -->
+  <section id="view-form" class="panel">
+    <div class="choice" role="group">
+      <button id="mode-new" type="button" aria-pressed="true"><strong data-i18n="modeNew"></strong><span data-i18n="modeNewHint"></span></button>
+      <button id="mode-change" type="button" aria-pressed="false"><strong data-i18n="modeChange"></strong><span data-i18n="modeChangeHint"></span></button>
+    </div>
+
+    <!-- muudatuse tuvastus -->
+    <form id="lookup" hidden novalidate>
+      <fieldset>
+        <legend data-i18n="lookupTitle"></legend>
+        <div class="grid">
+          <label><span data-i18n="fNr"></span><input id="lk-nr" class="mono" inputmode="numeric" required></label>
+          <label><span data-i18n="fEmail"></span><input id="lk-email" type="email" required></label>
+        </div>
+        <div class="actions"><button class="btn" type="submit" data-i18n="lookupBtn"></button><span id="lk-msg" class="msg" role="status"></span></div>
+      </fieldset>
+    </form>
+
+    <form id="reg" novalidate>
+      <fieldset>
+        <legend data-i18n="secRace"></legend>
+        <div class="numrow">
+          <div class="plate empty" id="plate" aria-hidden="true">–</div>
+          <div class="grid">
+            <label><span><span data-i18n="fNr"></span> <span class="req">*</span></span>
+              <select id="f-nr" class="mono" required></select>
+              <span class="hint" id="free-hint"></span></label>
+            <label><span><span data-i18n="fClass"></span> <span class="req">*</span></span>
+              <select id="f-class" required></select></label>
+            <label class="full"><span><span data-i18n="fTeam"></span> <span class="req">*</span></span><input id="f-team" required></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="secMachine"></legend>
+        <div class="grid">
+          <label class="full"><span><span data-i18n="fMachine"></span> <span class="req">*</span></span><input id="f-machine" required data-ph="phMachine"></label>
+          <label><span data-i18n="fVin"></span><input id="f-vin" class="mono" maxlength="17"></label>
+          <label><span data-i18n="fReg"></span><input id="f-reg" class="mono"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="secCrew"></legend>
+        <div class="grid">
+          <label><span><span data-i18n="fDriver"></span> <span class="req">*</span></span><input id="f-driver" required autocomplete="name"></label>
+          <label><span data-i18n="fCo"></span><input id="f-co"></label>
+          <label class="full"><span data-i18n="fNote"></span><textarea id="f-note" data-ph="phNote"></textarea></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="secContact"></legend>
+        <div class="grid">
+          <label><span><span data-i18n="fCountry"></span> <span class="req">*</span></span><input id="f-country" list="countries" required></label>
+          <label><span><span data-i18n="fEmail"></span> <span class="req">*</span></span><input id="f-email" type="email" required autocomplete="email"></label>
+          <label><span><span data-i18n="fPhone"></span> <span class="req">*</span></span><input id="f-phone" type="tel" required autocomplete="tel" placeholder="+372"></label>
+          <label><span data-i18n="fAddress"></span><input id="f-address" autocomplete="street-address"></label>
+        </div>
+        <datalist id="countries"><option value="Eesti"><option value="Latvija"><option value="Lietuva"><option value="Suomi"><option value="Sverige"><option value="Norge"><option value="Polska"></datalist>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="secNumbers"></legend>
+        <div class="grid">
+          <label><span data-i18n="fMain"></span><select id="f-main" class="num"></select><span class="hint" data-i18n="mainHint"></span></label>
+          <label><span data-i18n="fMainSize"></span><select id="f-mainsize" class="num"></select></label>
+          <div class="full checks" role="group" aria-labelledby="extra-lbl"><span id="extra-lbl" class="lbl" data-i18n="fExtra"></span><div id="f-extra" class="checkrow"></div><span class="hint" data-i18n="extraHint"></span></div>
+          <label><span data-i18n="fExtraSize"></span><select id="f-extrasize" class="num"></select></label>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button class="btn" type="submit" id="submit-btn"></button>
+        <span id="reg-msg" class="msg" role="status"></span>
+      </div>
+    </form>
+
+    <div id="done" class="done" hidden>
+      <div class="plate" id="done-plate"></div>
+      <h2 id="done-title"></h2>
+      <p id="done-text"></p>
+      <button class="btn ghost" type="button" id="again" data-i18n="again"></button>
+    </div>
+  </section>
+
+  <!-- AVALIK NIMEKIRI -->
+  <section id="view-list" class="panel" hidden>
+    <div>
+      <legend data-i18n="listTitle" style="margin:0"></legend>
+      <p class="count" id="list-count"></p>
+    </div>
+    <div class="tablewrap">
+      <table><thead><tr><th data-i18n="colNr"></th><th data-i18n="colTeam"></th></tr></thead><tbody id="list-body"></tbody></table>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ============ SEADISTUS ============ */
+const CONFIG = {
+  API_URL: "https://script.google.com/macros/s/AKfycbwPFoFxE0CKdbZMnNX3qIbU5_rlGIrvx6KC-R7DtkUPohZDaIXj96ixd7dHvNrBJFKP/exec",            // Apps Scripti veebirakenduse URL. Tühi = näidisrežiim.
+  NUMBERS: { from: 1, to: 150 },
+  CLASSES: ["ATV","TRO","TR1","TR2","TR3","Veok","ADV / LV-TRO"],
+  MAIN: ["12x12","30x45"],               // Põhinumber x2
+  EXTRA: ["6x6; 12x12","30x45; 15x22"],  // Lisanumbrite tellimus (mitu valikut)
+  MAIN_SIZE: ["10","20"],                // Numbri suurus
+  EXTRA_SIZE: ["5","10"]                 // Lisanumbri suurus
+};
+
+/* ============ TÕLKED ============ */
+const T = {
+  et:{title:"4x4 Offroad registreerimine",subtitle:"Võistleja ja masina registreerimine",
+    demo:"Näidisrežiim: andmed ei salvestu ja nimekirjas on väljamõeldud näidisvõistkonnad.",
+    tabForm:"Registreerimine",tabList:"Registreerunud",
+    modeNew:"Uus registreering",modeNewHint:"Registreerin esimest korda",
+    modeChange:"Muudatus",modeChangeHint:"Muudan juba saadetud andmeid",
+    lookupTitle:"Leia oma registreering",lookupBtn:"Ava registreering",
+    lookupFail:"Sellise numbri ja e-posti kombinatsiooniga registreeringut ei leitud.",lookupOk:"Registreering leitud. Muuda andmeid ja salvesta.",
+    secRace:"Võistlus",secMachine:"Masin",secCrew:"Meeskond",secContact:"Kontakt",secNumbers:"Stardinumbrid",
+    fNr:"Võistlusnumber",fClass:"Klass",fTeam:"Võistkond",fMachine:"Masin",fVin:"VIN",fReg:"Reg. nr",
+    fDriver:"Juht",fCo:"Kaasvõistleja",fNote:"Märkus",fCountry:"Riik",fEmail:"E-post",fPhone:"GSM",fAddress:"Aadress",
+    fMain:"Põhinumber x2",fMainSize:"Numbri suurus",mainHint:"2 tk, sisaldub osavõtutasus.",fExtra:"Lisanumbrite tellimus",extraHint:"Võid valida mitu.",fExtraSize:"Lisanumbri suurus",
+    phMachine:"nt Toyota Land Cruiser 80",phNote:"nt lisa kaasvõistleja autos",
+    pickNr:"Vali number",pickClass:"Vali klass",freeCount:n=>`${n} vaba numbrit`,
+    submitNew:"Saada registreering",submitChange:"Salvesta muudatused",sending:"Saadan…",
+    missing:"Täida tärniga väljad.",badEmail:"E-posti aadress ei ole korrektne.",taken:"See number võeti vahepeal ära. Vali teine number.",
+    doneNew:"Registreering vastu võetud",doneChange:"Muudatused salvestatud",
+    doneText:(nr,em)=>`Sinu võistlusnumber on ${nr}. Andmete muutmiseks vali „Muudatus” ja sisesta number ${nr} ning e-post ${em}.`,
+    again:"Tagasi vormi juurde",listTitle:"Registreerunud võistkonnad",colNr:"Nr",colTeam:"Võistkond",listCount:n=>`${n} võistkonda`,listEmpty:"Registreerunuid veel pole."},
+  en:{title:"4x4 Offroad registration",subtitle:"Competitor and vehicle registration",
+    demo:"Demo mode: data is not saved and the list shows made-up sample teams.",
+    tabForm:"Registration",tabList:"Entry list",
+    modeNew:"New entry",modeNewHint:"Registering for the first time",
+    modeChange:"Change",modeChangeHint:"Editing an entry I already sent",
+    lookupTitle:"Find your entry",lookupBtn:"Open entry",
+    lookupFail:"No entry found with this number and e-mail.",lookupOk:"Entry found. Edit the details and save.",
+    secRace:"Race",secMachine:"Vehicle",secCrew:"Crew",secContact:"Contact",secNumbers:"Race numbers",
+    fNr:"Race number",fClass:"Class",fTeam:"Team",fMachine:"Vehicle",fVin:"VIN",fReg:"Reg. no",
+    fDriver:"Driver",fCo:"Co-driver",fNote:"Notes",fCountry:"Country",fEmail:"E-mail",fPhone:"Mobile",fAddress:"Address",
+    fMain:"Main number x2",fMainSize:"Number size",mainHint:"2 pcs, included in the entry fee.",fExtra:"Extra numbers order",extraHint:"You can pick several.",fExtraSize:"Extra number size",
+    phMachine:"e.g. Toyota Land Cruiser 80",phNote:"e.g. extra co-driver in the car",
+    pickNr:"Choose number",pickClass:"Choose class",freeCount:n=>`${n} numbers free`,
+    submitNew:"Send entry",submitChange:"Save changes",sending:"Sending…",
+    missing:"Fill in the fields marked with a star.",badEmail:"The e-mail address is not valid.",taken:"This number was just taken. Choose another one.",
+    doneNew:"Entry received",doneChange:"Changes saved",
+    doneText:(nr,em)=>`Your race number is ${nr}. To edit your details, choose “Change” and enter number ${nr} and e-mail ${em}.`,
+    again:"Back to the form",listTitle:"Registered teams",colNr:"No",colTeam:"Team",listCount:n=>`${n} teams`,listEmpty:"No entries yet."}
+};
+
+/* ============ ANDMEKIHT ============ */
+// Näidisrežiimi "server" mälus. Päris režiimis läheb kõik Apps Scripti.
+const demoDb = [
+  {nr:7,klass:"TR2",voistkond:"Rabakonnad",email:"demo@naide.ee"},
+  {nr:12,klass:"TRO",voistkond:"Kivirullid",email:"demo@naide.ee"},
+  {nr:23,klass:"ATV",voistkond:"Porikärbsed",email:"demo@naide.ee"},
+  {nr:44,klass:"TR3",voistkond:"Metsavennad Racing",email:"demo@naide.ee"},
+  {nr:101,klass:"Veok",voistkond:"Raskekaal",email:"demo@naide.ee"}
+];
+function allNumbers(){const a=[];for(let i=CONFIG.NUMBERS.from;i<=CONFIG.NUMBERS.to;i++)a.push(i);return a}
+const demoApi = {
+  free(){const used=new Set(demoDb.map(r=>r.nr));return {ok:true,free:allNumbers().filter(n=>!used.has(n))}},
+  public(){return {ok:true,list:demoDb.map(r=>({nr:r.nr,voistkond:r.voistkond})).sort((a,b)=>a.nr-b.nr)}},
+  lookup({nr,email}){const r=demoDb.find(x=>x.nr===+nr&&x.email.toLowerCase()===String(email).trim().toLowerCase());return r?{ok:true,record:{...r}}:{ok:false,error:"notfound"}},
+  save({mode,data,auth}){
+    const nr=+data.nr;
+    if(mode==="new"){ if(demoDb.some(r=>r.nr===nr))return {ok:false,error:"taken"}; demoDb.push({...data,nr}); return {ok:true}}
+    const i=demoDb.findIndex(r=>r.nr===+auth.nr&&r.email.toLowerCase()===auth.email.toLowerCase());
+    if(i<0)return {ok:false,error:"notfound"};
+    if(nr!==+auth.nr&&demoDb.some(r=>r.nr===nr))return {ok:false,error:"taken"};
+    demoDb[i]={...demoDb[i],...data,nr}; return {ok:true};
+  }
+};
+async function api(action,payload={}){
+  if(!CONFIG.API_URL){await new Promise(r=>setTimeout(r,250));return demoApi[action](payload)}
+  const res=await fetch(CONFIG.API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,...payload})});
+  return res.json();
+}
+
+/* ============ KASUTAJALIIDES ============ */
+const $=id=>document.getElementById(id);
+let lang=/^et\b/i.test(navigator.language||"et")?"et":"en", mode="new", auth=null, freeNumbers=[];
+const FIELDS={klass:"f-class",voistkond:"f-team",masin:"f-machine",vin:"f-vin",regnr:"f-reg",juht:"f-driver",kaasvoistleja:"f-co",
+  markus:"f-note",riik:"f-country",email:"f-email",gsm:"f-phone",aadress:"f-address",pohinumber:"f-main",numbri_suurus:"f-mainsize",lisanumbri_suurus:"f-extrasize"};
+
+function t(k,...a){const v=T[lang][k];return typeof v==="function"?v(...a):v}
+function applyLang(){
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n));
+  document.querySelectorAll("[data-ph]").forEach(el=>el.placeholder=t(el.dataset.ph));
+  $("lang-et").setAttribute("aria-pressed",lang==="et");$("lang-en").setAttribute("aria-pressed",lang==="en");
+  $("submit-btn").textContent=mode==="new"?t("submitNew"):t("submitChange");
+  fillClass($("f-class").value); fillNumbers($("f-nr").value);
+  $("demo-banner").hidden=!!CONFIG.API_URL;
+  if(!$("view-list").hidden)loadList();
+}
+function fillClass(keep){
+  const s=$("f-class");s.innerHTML=`<option value="">${t("pickClass")}</option>`+CONFIG.CLASSES.map(c=>`<option>${c}</option>`).join("");s.value=keep||"";
+}
+function fillSizes(){
+  const opt=a=>a.map(s=>`<option>${s}</option>`).join("");
+  $("f-main").innerHTML=opt(CONFIG.MAIN);$("f-mainsize").innerHTML=opt(CONFIG.MAIN_SIZE);$("f-extrasize").innerHTML=opt(CONFIG.EXTRA_SIZE);
+  $("f-extra").innerHTML=CONFIG.EXTRA.map((s,i)=>`<label class="check"><input type="checkbox" id="f-extra-${i}" value="${s}"><span class="num">${s}</span></label>`).join("");
+}
+const extraBoxes=()=>[...$("f-extra").querySelectorAll("input")];
+function fillNumbers(keep){
+  const list=[...freeNumbers]; if(mode==="change"&&auth&&!list.includes(+auth.nr))list.push(+auth.nr); list.sort((a,b)=>a-b);
+  const s=$("f-nr");s.innerHTML=`<option value="">${t("pickNr")}</option>`+list.map(n=>`<option value="${n}">${n}</option>`).join("");
+  s.value=keep&&list.includes(+keep)?keep:""; $("free-hint").textContent=t("freeCount",freeNumbers.length); updatePlate();
+}
+function updatePlate(){const v=$("f-nr").value;$("plate").textContent=v||"–";$("plate").classList.toggle("empty",!v)}
+async function refreshFree(keep){const r=await api("free");freeNumbers=r.free||[];fillNumbers(keep)}
+
+function setMode(m){
+  mode=m;auth=null;
+  $("mode-new").setAttribute("aria-pressed",m==="new");$("mode-change").setAttribute("aria-pressed",m==="change");
+  $("lookup").hidden=m!=="change";$("reg").hidden=m==="change";$("done").hidden=true;
+  $("reg").reset();$("lk-msg").textContent="";$("reg-msg").textContent="";
+  $("submit-btn").textContent=m==="new"?t("submitNew"):t("submitChange");
+  refreshFree();
+}
+function readForm(){const d={nr:$("f-nr").value};for(const[k,id]of Object.entries(FIELDS))d[k]=$(id).value.trim();
+  d.lisanumbrid=extraBoxes().filter(b=>b.checked).map(b=>b.value).join(" | ");return d}
+function validate(){
+  let ok=true;
+  $("reg").querySelectorAll("[required]").forEach(el=>{const bad=!el.value.trim();el.setAttribute("aria-invalid",bad);if(bad)ok=false});
+  if(!ok)return t("missing");
+  const em=$("f-email");if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())){em.setAttribute("aria-invalid","true");return t("badEmail")}
+  return null;
+}
+
+$("lang-et").onclick=()=>{lang="et";applyLang()};
+$("lang-en").onclick=()=>{lang="en";applyLang()};
+$("mode-new").onclick=()=>setMode("new");
+$("mode-change").onclick=()=>setMode("change");
+$("f-nr").onchange=updatePlate;
+$("tab-form").onclick=()=>switchTab("form");
+$("tab-list").onclick=()=>switchTab("list");
+function switchTab(v){$("tab-form").setAttribute("aria-selected",v==="form");$("tab-list").setAttribute("aria-selected",v==="list");
+  $("view-form").hidden=v!=="form";$("view-list").hidden=v!=="list";if(v==="list")loadList()}
+
+$("lookup").onsubmit=async e=>{
+  e.preventDefault();const nr=$("lk-nr").value.trim(),email=$("lk-email").value.trim();
+  if(!nr||!email){$("lk-msg").className="msg err";$("lk-msg").textContent=t("missing");return}
+  const r=await api("lookup",{nr,email});
+  if(!r.ok){$("lk-msg").className="msg err";$("lk-msg").textContent=t("lookupFail");return}
+  auth={nr:+nr,email};$("lk-msg").className="msg ok";$("lk-msg").textContent=t("lookupOk");
+  await refreshFree();
+  for(const[k,id]of Object.entries(FIELDS))if(r.record[k]!==undefined)$(id).value=r.record[k];
+  const ex=String(r.record.lisanumbrid||"").split(" | ");extraBoxes().forEach(b=>b.checked=ex.includes(b.value));
+  $("f-nr").value=String(r.record.nr);updatePlate();$("reg").hidden=false;
+};
+
+$("reg").onsubmit=async e=>{
+  e.preventDefault();const msg=$("reg-msg");const err=validate();
+  if(err){msg.className="msg err";msg.textContent=err;return}
+  const btn=$("submit-btn");btn.disabled=true;btn.textContent=t("sending");msg.textContent="";
+  const data=readForm();
+  try{
+    const r=await api("save",{mode,data,auth});
+    if(!r.ok){msg.className="msg err";msg.textContent=r.error==="taken"?t("taken"):t("lookupFail");if(r.error==="taken")refreshFree();return}
+    $("reg").hidden=true;$("lookup").hidden=true;$("done").hidden=false;
+    $("done-plate").textContent=data.nr;$("done-title").textContent=mode==="new"?t("doneNew"):t("doneChange");
+    $("done-text").textContent=t("doneText",data.nr,data.email);
+  }catch(x){msg.className="msg err";msg.textContent=String(x)}
+  finally{btn.disabled=false;btn.textContent=mode==="new"?t("submitNew"):t("submitChange")}
+};
+$("again").onclick=()=>setMode(mode);
+
+async function loadList(){
+  const r=await api("public");const list=r.list||[];
+  $("list-count").textContent=list.length?t("listCount",list.length):t("listEmpty");
+  $("list-body").innerHTML=list.map(x=>`<tr><td class="nr">${x.nr}</td><td>${String(x.voistkond).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}</td></tr>`).join("");
+}
+
+fillSizes();applyLang();setMode("new");
+</script>
+
+</body>
+</html>
