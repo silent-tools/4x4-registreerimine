@@ -310,13 +310,13 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
 
 <script>
 /* ============ SEADISTUS ============ */
-const BIG = { main: "30×45 cm", extra: ["30×45 cm", "15×22 cm"] };
+const BIG = { main: "30x45 cm", extra: ["30x45 cm", "15x22 cm"] };
 const CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbwPFoFxE0CKdbZMnNX3qIbU5_rlGIrvx6KC-R7DtkUPohZDaIXj96ixd7dHvNrBJFKP/exec",            // Apps Scripti veebirakenduse URL. Tühi = näidisrežiim.
   EXTRA_PRICE: "X",       // lisanumbri hind eurodes
   // numbrid: prefix + kahekohaline osa (from..to)
   CLASSES: [
-    { id: "ATV",          prefix: "",   from: 1, to: 99, main: "12×12 cm", extra: ["6×6 cm", "12×12 cm"], coOptional: true },
+    { id: "ATV",          prefix: "",   from: 1, to: 99, main: "12x12 cm", extra: ["6x6 cm", "12x12 cm"], coOptional: true },
     { id: "TRO",          prefix: "0",  from: 1, to: 99, ...BIG },
     { id: "TR1",          prefix: "1",  from: 0, to: 99, ...BIG },
     { id: "TR2",          prefix: "2",  from: 0, to: 99, ...BIG },
@@ -477,7 +477,7 @@ function readForm(){
   const c=cls($("f-class").value);
   const d={nr:$("f-nr").value,klass:$("f-class").value,website:$("f-hp").value};
   for(const[k,id]of Object.entries(FIELDS))d[k]=$(id).value.trim();
-  d.pohinumber=c?`${c.main} × 2`:""; d.lisanumbrid=fmtExtras(readExtras());
+  d.pohinumber=c?`${c.main} x 2`:""; d.lisanumbrid=fmtExtras(readExtras());
   return d;
 }
 function validate(){
@@ -530,12 +530,12 @@ $("reg").onsubmit=async e=>{
   try{
     const r=await api("save",{mode,data,auth});
     if(!r.ok){msg.className="msg err";
-      msg.textContent={taken:t("taken"),code:t("badCode"),notfound:t("lookupFail"),missing:t("missing")}[r.error]||t("fail");
+      msg.textContent={taken:t("taken"),code:t("badCode"),notfound:t("lookupFail"),missing:t("missing")}[r.error]||(t("fail")+(r.detail?" ("+r.detail+")":""));
       if(r.error==="taken"){await refreshUsed();onClass(null,readExtras())}return}
     $("reg").hidden=true;$("lookup").hidden=true;$("done").hidden=false;
     $("done-plate").textContent=data.nr;$("done-plate").classList.toggle("long",data.nr.length>=4);$("done-title").textContent=mode==="new"?t("doneNew"):t("doneChange");
     $("done-text").textContent=t("doneText",data.nr,data.email);
-  }catch(x){msg.className="msg err";msg.textContent=t("fail")}
+  }catch(x){msg.className="msg err";msg.textContent=t("fail")+" ("+x.message+")"}
   finally{btn.disabled=false;btn.textContent=mode==="new"?t("submitNew"):t("submitChange")}
 };
 $("again").onclick=()=>setMode(mode);
