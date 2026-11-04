@@ -135,6 +135,9 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
 .copy{margin-left:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:4px;font:500 12px var(--f-body);padding:2px 8px;cursor:pointer}
 .check{display:flex;gap:10px;align-items:center;font-weight:500;cursor:pointer}
 .check input{width:20px;height:20px;accent-color:var(--accent);margin:0;flex:none}
+.change-note{margin:0;background:var(--warn-bg);color:var(--warn-fg);border-radius:6px;padding:10px 14px;font-weight:500}
+#fs-race:disabled select{opacity:1}
+.vin-ok{color:var(--ok)}
 .done-pay{background:var(--warn-bg);color:var(--warn-fg);border-radius:6px;padding:10px 14px;text-align:left}
 @media (max-width:420px){.bank{grid-template-columns:1fr}.bank dt{margin-top:6px}}
 @media (max-width:560px){.extra-rows{grid-template-columns:1fr}}
@@ -234,7 +237,8 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
 
     <form id="reg" novalidate>
       <input id="f-hp" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <fieldset>
+      <p id="change-note" class="change-note" hidden data-i18n="changeNote"></p>
+      <fieldset id="fs-race">
         <legend data-i18n="secRace"></legend>
         <div class="numrow">
           <div class="plate empty" id="plate" aria-hidden="true">–</div>
@@ -253,7 +257,8 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
         <legend data-i18n="secMachine"></legend>
         <div class="grid">
           <label class="full"><span><span data-i18n="fMachine"></span> <span class="req">*</span></span><input id="f-machine" required data-ph="phMachine"></label>
-          <label><span><span data-i18n="fVin"></span> <span class="req">*</span></span><input id="f-vin" class="mono" maxlength="17" required></label>
+          <label><span><span data-i18n="fVin"></span> <span class="req">*</span></span><input id="f-vin" class="mono" maxlength="17" minlength="17" required autocomplete="off" spellcheck="false">
+            <span class="hint" id="vin-hint"></span></label>
           <label><span data-i18n="fReg"></span><input id="f-reg" class="mono"></label>
         </div>
       </fieldset>
@@ -268,7 +273,7 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
         </div>
       </fieldset>
 
-      <fieldset>
+      <fieldset id="fs-contact">
         <legend data-i18n="secContact"></legend>
         <div class="grid">
           <label><span><span data-i18n="fCountry"></span> <span class="req">*</span></span><input id="f-country" list="countries" required></label>
@@ -280,7 +285,7 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
         <datalist id="countries"><option value="Eesti"><option value="Latvija"><option value="Lietuva"><option value="Suomi"><option value="Sverige"><option value="Norge"><option value="Polska"></datalist>
       </fieldset>
 
-      <fieldset>
+      <fieldset id="fs-numbers">
         <legend data-i18n="secNumbers"></legend>
         <div class="mainnum">
           <span class="lbl" data-i18n="fMain"></span>
@@ -304,6 +309,10 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
             <dt data-i18n="contact"></dt><dd>+372 655 6201 · info@printwell.ee</dd>
           </dl>
           <label class="check invoice"><input type="checkbox" id="f-invoice"><span data-i18n="invoice"></span></label>
+          <div id="inv-fields" class="grid" hidden>
+            <label><span><span data-i18n="fCompany"></span> <span class="req">*</span></span><input id="f-company" required autocomplete="organization"></label>
+            <label><span><span data-i18n="fCompanyReg"></span> <span class="req">*</span></span><input id="f-companyreg" class="num" required></label>
+          </div>
         </div>
       </fieldset>
 
@@ -364,7 +373,7 @@ const T = {
     lookupTitle:"Leia oma registreering",lookupBtn:"Ava registreering",
     lookupFail:"Sellise numbri ja e-posti kombinatsiooniga registreeringut ei leitud.",lookupOk:"Registreering leitud. Muuda andmeid ja salvesta.",
     secRace:"Võistlus",secMachine:"Masin",secCrew:"Meeskond",secContact:"Kontakt",secNumbers:"Stardinumbrid",
-    fNr:"Võistlusnumber",fClass:"Võistlusklass",fTeam:"Võistkond",fMachine:"Masin",fVin:"VIN",fReg:"Reg. nr",
+    fNr:"Võistlusnumber",fClass:"Võistlusklass",fTeam:"Võistkond",fMachine:"Masin",fVin:"VIN",vinHint:n=>`${n}/17 märki`,badVin:"VIN peab olema täpselt 17 märki: tähed ja numbrid, ilma I, O ja Q tähtedeta.",fCompany:"Ettevõtte nimi (arve saaja)",fCompanyReg:"Ettevõtte registrikood",changeNote:"Muuta saab ainult masina ja meeskonna andmeid. Muu muutmiseks võta ühendust korraldajaga.",noChange:"Sa ei muutnud midagi.",fReg:"Reg. nr",
     fDriver:"Juht",fCo:"Kaasvõistleja",coHint:"ATV klassis ei ole kohustuslik.",fNote:"Märkus",fCountry:"Riik",fEmail:"E-post",fPhone:"GSM",phoneHint:"Koos riigikoodiga, nt +372 5123 4567",fAddress:"Aadress",
     fMain:"Põhinumber, 2 tk:",mainFree:"Põhinumbrid on registreerunutele tasuta.",fExtra:"Lisanumbrite tellimus",unit:p=>`${p} € / tk`,qty:"tk",total:"Lisanumbrid kokku",payee:"Saaja",regCode:"Reg. nr",vat:"KMKR",payRef:"Selgitus",contact:"Kontakt",copy:"Kopeeri",copied:"Kopeeritud",invoice:"Soovin maksta arvega",payLead:n=>`Kanna ${n} € alljärgnevale kontole:`,donePay:(n,r)=>`Lisanumbrite eest tasu ${n} € Printwell OÜ kontole EE692200221026598634, selgitus „${r}”.`,doneInvoice:n=>`Valisid lisanumbrite (${n} €) eest arvega maksmise.`,
     pickClassFirst:"Vali kõigepealt võistlusklass.",
@@ -385,7 +394,7 @@ const T = {
     lookupTitle:"Find your entry",lookupBtn:"Open entry",
     lookupFail:"No entry found with this number and e-mail.",lookupOk:"Entry found. Edit the details and save.",
     secRace:"Race",secMachine:"Vehicle",secCrew:"Crew",secContact:"Contact",secNumbers:"Race numbers",
-    fNr:"Race number",fClass:"Class",fTeam:"Team",fMachine:"Vehicle",fVin:"VIN",fReg:"Reg. no",
+    fNr:"Race number",fClass:"Class",fTeam:"Team",fMachine:"Vehicle",fVin:"VIN",vinHint:n=>`${n}/17 characters`,badVin:"The VIN must be exactly 17 characters: letters and digits, without I, O and Q.",fCompany:"Company name (invoice recipient)",fCompanyReg:"Company registration code",changeNote:"Only vehicle and crew details can be changed. Contact the organiser to change anything else.",noChange:"You did not change anything.",fReg:"Reg. no",
     fDriver:"Driver",fCo:"Co-driver",coHint:"Not required in the ATV class.",fNote:"Notes",fCountry:"Country",fEmail:"E-mail",fPhone:"Mobile",phoneHint:"With country code, e.g. +372 5123 4567",fAddress:"Address",
     fMain:"Main number, 2 pcs:",mainFree:"Main numbers are free for registered competitors.",fExtra:"Extra numbers order",unit:p=>`${p} € / pc`,qty:"pcs",total:"Extra numbers total",payee:"Payee",regCode:"Reg. no",vat:"VAT no",payRef:"Reference",contact:"Contact",copy:"Copy",copied:"Copied",invoice:"I want to pay by invoice",payLead:n=>`Transfer ${n} € to the account below:`,donePay:(n,r)=>`Pay ${n} € for extra numbers to Printwell OÜ, IBAN EE692200221026598634, reference “${r}”.`,doneInvoice:n=>`You chose to pay for the extra numbers (${n} €) by invoice.`,
     pickClassFirst:"Choose the class first.",
@@ -433,8 +442,9 @@ const demoApi = {
     if(mode==="new"){ if(demoDb.some(r=>r.nr===nr))return {ok:false,error:"taken"}; demoDb.push({...data,nr}); return {ok:true}}
     const i=demoDb.findIndex(r=>r.nr===normNr(auth.nr)&&r.email.toLowerCase()===auth.email.toLowerCase());
     if(i<0)return {ok:false,error:"notfound"};
-    if(nr!==normNr(auth.nr)&&demoDb.some(r=>r.nr===nr))return {ok:false,error:"taken"};
-    demoDb[i]={...demoDb[i],...data,nr}; return {ok:true};
+    const diff=EDITABLE.filter(k=>String(data[k]||"")!==String(demoDb[i][k]||""));
+    if(!diff.length)return {ok:true,nochange:true};
+    diff.forEach(k=>demoDb[i][k]=data[k]); return {ok:true};
   }
 };
 async function api(action,payload={}){
@@ -447,6 +457,8 @@ async function api(action,payload={}){
 /* ============ KASUTAJALIIDES ============ */
 const $=id=>document.getElementById(id);
 let lang=/^et\b/i.test(navigator.language||"et")?"et":"en", mode="new", auth=null, used=new Set(), accessCode="";
+const EDITABLE=["masin","vin","regnr","juht","kaasvoistleja","markus"];
+const VIN_RE=/^[A-HJ-NPR-Z0-9]{17}$/;
 const FIELDS={voistkond:"f-team",masin:"f-machine",vin:"f-vin",regnr:"f-reg",juht:"f-driver",kaasvoistleja:"f-co",
   markus:"f-note",riik:"f-country",email:"f-email",gsm:"f-phone",aadress:"f-address"};
 
@@ -458,6 +470,7 @@ function applyLang(){
   $("lang-et").setAttribute("aria-pressed",lang==="et");$("lang-en").setAttribute("aria-pressed",lang==="en");
   $("submit-btn").textContent=mode==="new"?t("submitNew"):t("submitChange");
   const c=$("f-class").value; fillClass(c); if(c) onClass($("f-nr").value, readExtras());
+  updateVin();
   $("demo-banner").hidden=!!CONFIG.API_URL;
   if(!$("view-list").hidden)loadList();
 }
@@ -491,6 +504,7 @@ function updateTotal(){
   const sum=extrasTotal(readExtras());
   $("extra-total").textContent=sum+" €";
   $("pay").hidden=sum===0; if(sum===0)$("f-invoice").checked=false;
+  $("inv-fields").hidden=!$("f-invoice").checked;
   $("pay-lead").textContent=t("payLead",sum); $("pay-ref").textContent=payRef();
 }
 function readExtras(){const m={};$("extra-rows").querySelectorAll("input").forEach(i=>m[i.dataset.size]=Math.max(0,Math.min(99,parseInt(i.value)||0)));return m}
@@ -505,20 +519,31 @@ async function setMode(m){
   $("reg").reset();$("lookup").reset();$("lk-msg").textContent="";$("reg-msg").textContent="";
   $("reg").querySelectorAll("[aria-invalid]").forEach(e=>e.removeAttribute("aria-invalid"));
   $("submit-btn").textContent=m==="new"?t("submitNew"):t("submitChange");
-  await refreshUsed(); onClass();
+  lockForChange(false);
+  await refreshUsed(); onClass(); updateVin();
 }
+function lockForChange(on){
+  $("fs-race").disabled=on; $("fs-contact").hidden=on; $("fs-numbers").hidden=on; $("change-note").hidden=!on;
+}
+function updateVin(){const v=$("f-vin").value;$("vin-hint").textContent=t("vinHint",v.length);$("vin-hint").classList.toggle("vin-ok",VIN_RE.test(v))}
 function readForm(){
   const c=cls($("f-class").value);
   const d={nr:$("f-nr").value,klass:$("f-class").value,website:$("f-hp").value};
   for(const[k,id]of Object.entries(FIELDS))d[k]=$(id).value.trim();
   d.pohinumber=c?`${c.main} x 2`:""; const ex=readExtras(); d.lisanumbrid=fmtExtras(ex);
   d.summa=extrasTotal(ex); d.arvega=$("f-invoice").checked&&d.summa>0?"Jah":"";
+  d.arve_firma=d.arvega?$("f-company").value.trim():""; d.arve_regkood=d.arvega?$("f-companyreg").value.trim():"";
+  if(mode==="change"){const e={};EDITABLE.forEach(k=>e[k]=d[k]);e.nr=d.nr;e.voistkond=d.voistkond;e.email=auth.email;return e}
   return d;
 }
 function validate(){
   let ok=true;
-  $("reg").querySelectorAll("[required]").forEach(el=>{const bad=!el.value.trim();el.setAttribute("aria-invalid",bad);if(bad)ok=false});
+  $("reg").querySelectorAll("[required]").forEach(el=>{
+    if(el.matches(":disabled")||el.closest("[hidden]")){el.removeAttribute("aria-invalid");return}
+    const bad=!el.value.trim();el.setAttribute("aria-invalid",bad);if(bad)ok=false});
   if(!ok)return t("missing");
+  const vin=$("f-vin");if(!VIN_RE.test(vin.value)){vin.setAttribute("aria-invalid","true");return t("badVin")}
+  if(mode==="change")return null;
   const em=$("f-email");if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())){em.setAttribute("aria-invalid","true");return t("badEmail")}
   const ph=$("f-phone");if(!/^\+\d[\d\s-]{6,}$/.test(ph.value.trim())){ph.setAttribute("aria-invalid","true");return t("badPhone")}
   return null;
@@ -532,6 +557,9 @@ $("f-class").onchange=()=>onClass(null, readExtras());
 $("f-nr").onchange=()=>{updatePlate();updateTotal()};
 $("extra-rows").addEventListener("input",updateTotal);
 $("f-team").addEventListener("input",updateTotal);
+$("f-invoice").addEventListener("change",updateTotal);
+$("f-vin").addEventListener("input",()=>{const el=$("f-vin"),v=el.value,clean=v.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if(clean!==v){const p=el.selectionStart,cut=v.slice(0,p).replace(/[A-Za-z0-9]/g,"").length;el.value=clean;el.setSelectionRange(p-cut,p-cut)}updateVin()});
 document.querySelectorAll(".copy[data-copy]").forEach(b=>b.onclick=async()=>{
   document.querySelectorAll(".copy[data-copy]").forEach(o=>o.textContent=t("copy"));
   try{await navigator.clipboard.writeText(b.dataset.copy);b.textContent=t("copied")}
@@ -560,7 +588,7 @@ $("lookup").onsubmit=async e=>{
   $("f-class").value=r.record.klass||"";
   onClass(normNr(r.record.nr), parseExtras(r.record.lisanumbrid));
   for(const[k,id]of Object.entries(FIELDS))if(r.record[k]!==undefined)$(id).value=r.record[k];
-  updateTotal(); $("f-invoice").checked=r.record.arvega==="Jah"&&!$("pay").hidden;
+  updateTotal(); updateVin(); lockForChange(true);
   $("reg").hidden=false;
 };
 
@@ -571,13 +599,14 @@ $("reg").onsubmit=async e=>{
   const data=readForm();
   try{
     const r=await api("save",{mode,data,auth});
+    if(r.ok&&r.nochange){msg.className="msg err";msg.textContent=t("noChange");return}
     if(!r.ok){msg.className="msg err";
-      msg.textContent={taken:t("taken"),code:t("badCode"),notfound:t("lookupFail"),missing:t("missing")}[r.error]||(t("fail")+(r.detail?" ("+r.detail+")":""));
+      msg.textContent={taken:t("taken"),code:t("badCode"),notfound:t("lookupFail"),missing:t("missing"),vin:t("badVin")}[r.error]||(t("fail")+(r.detail?" ("+r.detail+")":""));
       if(r.error==="taken"){await refreshUsed();onClass(null,readExtras())}return}
     $("reg").hidden=true;$("lookup").hidden=true;$("done").hidden=false;
     $("done-plate").textContent=data.nr;$("done-plate").classList.toggle("long",data.nr.length>=4);$("done-title").textContent=mode==="new"?t("doneNew"):t("doneChange");
     $("done-text").textContent=t("doneText",data.nr,data.email);
-    const dp=$("done-pay"); dp.hidden=!data.summa;
+    const dp=$("done-pay"); dp.hidden=mode!=="new"||!data.summa;
     dp.textContent=data.arvega?t("doneInvoice",data.summa):t("donePay",data.summa,[data.nr,data.voistkond].join(" "));
   }catch(x){msg.className="msg err";msg.textContent=t("fail")+" ("+x.message+")"}
   finally{btn.disabled=false;btn.textContent=mode==="new"?t("submitNew"):t("submitChange")}
