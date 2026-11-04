@@ -295,10 +295,10 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
         <div id="pay" class="pay" hidden>
           <p class="pay-lead" id="pay-lead"></p>
           <dl class="bank">
-            <dt data-i18n="payee"></dt><dd>Printwell OÜ</dd>
+            <dt data-i18n="payee"></dt><dd>Printwell OÜ <button type="button" class="copy" data-copy="Printwell OÜ" data-i18n="copy"></button></dd>
             <dt data-i18n="regCode"></dt><dd class="num">11092599</dd>
             <dt data-i18n="vat"></dt><dd class="num">EE100941072</dd>
-            <dt>IBAN</dt><dd class="num iban">EE692200221026598634 <button type="button" class="copy" id="copy-iban" data-i18n="copy"></button></dd>
+            <dt>IBAN</dt><dd class="num iban">EE692200221026598634 <button type="button" class="copy" data-copy="EE692200221026598634" data-i18n="copy"></button></dd>
             <dt>SWIFT</dt><dd class="num">HABAEE2X</dd>
             <dt data-i18n="payRef"></dt><dd id="pay-ref"></dd>
             <dt data-i18n="contact"></dt><dd>+372 655 6201 · info@printwell.ee</dd>
@@ -532,8 +532,10 @@ $("f-class").onchange=()=>onClass(null, readExtras());
 $("f-nr").onchange=()=>{updatePlate();updateTotal()};
 $("extra-rows").addEventListener("input",updateTotal);
 $("f-team").addEventListener("input",updateTotal);
-$("copy-iban").onclick=async()=>{const b=$("copy-iban");try{await navigator.clipboard.writeText("EE692200221026598634");b.textContent=t("copied")}
-  catch(x){const r=document.createRange();r.selectNodeContents(b.parentNode.firstChild);getSelection().removeAllRanges();getSelection().addRange(r)}};
+document.querySelectorAll(".copy[data-copy]").forEach(b=>b.onclick=async()=>{
+  document.querySelectorAll(".copy[data-copy]").forEach(o=>o.textContent=t("copy"));
+  try{await navigator.clipboard.writeText(b.dataset.copy);b.textContent=t("copied")}
+  catch(x){const r=document.createRange();r.selectNodeContents(b.parentNode.firstChild);getSelection().removeAllRanges();getSelection().addRange(r)}});
 $("tab-form").onclick=()=>switchTab("form");
 $("tab-list").onclick=()=>switchTab("list");
 function switchTab(v){$("tab-form").setAttribute("aria-selected",v==="form");$("tab-list").setAttribute("aria-selected",v==="list");
