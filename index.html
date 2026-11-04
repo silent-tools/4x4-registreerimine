@@ -495,7 +495,7 @@ function onClass(keepNr, keepExtras){
   $("main-size").textContent=c.main;
   const ex=keepExtras||{};
   $("extra-rows").innerHTML=c.extra.map((size,i)=>`<label class="qty"><span class="qty-name"><span class="num">${size}</span><small>${t("unit",CONFIG.PRICES[size])}</small></span>
-    <span class="qty-in"><input id="f-ex-${i}" type="number" min="0" max="99" step="1" value="${ex[size]||0}" data-size="${esc(size)}" class="num"> ${t("qty")}</span></label>`).join("");
+    <span class="qty-in"><input id="f-ex-${i}" type="number" min="0" max="99" step="1" value="${ex[size]||""}" placeholder="0" data-size="${esc(size)}" class="num"> ${t("qty")}</span></label>`).join("");
   updatePlate();updateTotal();
 }
 function extrasTotal(m){return Object.entries(m).reduce((a,[s,q])=>a+(CONFIG.PRICES[s]||0)*q,0)}
@@ -556,6 +556,7 @@ $("mode-change").onclick=()=>setMode("change");
 $("f-class").onchange=()=>onClass(null, readExtras());
 $("f-nr").onchange=()=>{updatePlate();updateTotal()};
 $("extra-rows").addEventListener("input",updateTotal);
+["focusin","click"].forEach(ev=>$("extra-rows").addEventListener(ev,e=>{if(e.target.matches("input"))e.target.select()}));
 $("f-team").addEventListener("input",updateTotal);
 $("f-invoice").addEventListener("change",updateTotal);
 $("f-vin").addEventListener("input",()=>{const el=$("f-vin"),v=el.value,clean=v.toUpperCase().replace(/[^A-Z0-9]/g,"");
