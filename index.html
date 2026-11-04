@@ -125,6 +125,18 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
 .qty>.num{font-family:var(--f-display);font-size:20px;font-weight:600}
 .qty-in{display:flex;align-items:center;gap:6px;color:var(--muted)}
 .qty input{width:72px;text-align:right;background:var(--surface)}
+.qty-name{display:grid;gap:0}.qty-name small{color:var(--muted);font-size:13px}
+.total{display:flex;justify-content:flex-end;align-items:baseline;gap:12px;font-weight:600;border-top:2px solid var(--line);padding-top:10px}
+.total strong{font-family:var(--f-display);font-size:28px}
+.pay{display:grid;gap:12px;border:2px dashed var(--line);border-radius:8px;padding:14px 16px;background:var(--bg)}
+.pay-lead{margin:0;font-weight:600}
+.bank{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 16px;margin:0;font-size:15px}
+.bank dt{color:var(--muted)}.bank dd{margin:0;overflow-wrap:anywhere}
+.copy{margin-left:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:4px;font:500 12px var(--f-body);padding:2px 8px;cursor:pointer}
+.check{display:flex;gap:10px;align-items:center;font-weight:500;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--accent);margin:0;flex:none}
+.done-pay{background:var(--warn-bg);color:var(--warn-fg);border-radius:6px;padding:10px 14px;text-align:left}
+@media (max-width:420px){.bank{grid-template-columns:1fr}.bank dt{margin-top:6px}}
 @media (max-width:560px){.extra-rows{grid-template-columns:1fr}}
 </style>
 </head>
@@ -276,8 +288,22 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
           <span class="free" data-i18n="mainFree"></span>
         </div>
         <div class="extras">
-          <div class="extras-head"><span class="lbl" data-i18n="fExtra"></span><span class="price" id="extra-price"></span></div>
+          <div class="extras-head"><span class="lbl" data-i18n="fExtra"></span></div>
           <div id="extra-rows" class="extra-rows"><span class="hint" data-i18n="pickClassFirst"></span></div>
+          <div class="total"><span data-i18n="total"></span><strong id="extra-total" class="num">0 €</strong></div>
+        </div>
+        <div id="pay" class="pay" hidden>
+          <p class="pay-lead" id="pay-lead"></p>
+          <dl class="bank">
+            <dt data-i18n="payee"></dt><dd>Printwell OÜ</dd>
+            <dt data-i18n="regCode"></dt><dd class="num">11092599</dd>
+            <dt data-i18n="vat"></dt><dd class="num">EE100941072</dd>
+            <dt>IBAN</dt><dd class="num iban">EE692200221026598634 <button type="button" class="copy" id="copy-iban" data-i18n="copy"></button></dd>
+            <dt>SWIFT</dt><dd class="num">HABAEE2X</dd>
+            <dt data-i18n="payRef"></dt><dd id="pay-ref"></dd>
+            <dt data-i18n="contact"></dt><dd>+372 655 6201 · info@printwell.ee</dd>
+          </dl>
+          <label class="check invoice"><input type="checkbox" id="f-invoice"><span data-i18n="invoice"></span></label>
         </div>
       </fieldset>
 
@@ -291,6 +317,7 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
       <div class="plate" id="done-plate"></div>
       <h2 id="done-title"></h2>
       <p id="done-text"></p>
+      <p id="done-pay" class="done-pay" hidden></p>
       <button class="btn ghost" type="button" id="again" data-i18n="again"></button>
     </div>
     </div>
@@ -313,7 +340,7 @@ td.nr{font-family:var(--f-display);font-weight:800;font-size:22px;width:70px}
 const BIG = { main: "30x45 cm", extra: ["30x45 cm", "15x22 cm"] };
 const CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbwPFoFxE0CKdbZMnNX3qIbU5_rlGIrvx6KC-R7DtkUPohZDaIXj96ixd7dHvNrBJFKP/exec",            // Apps Scripti veebirakenduse URL. Tühi = näidisrežiim.
-  EXTRA_PRICE: "X",       // lisanumbri hind eurodes
+  PRICES: { "6x6 cm": 8, "12x12 cm": 12, "15x22 cm": 15, "30x45 cm": 20 },  // lisanumbri hind € / tk
   // numbrid: prefix + kahekohaline osa (from..to)
   CLASSES: [
     { id: "ATV",          prefix: "",   from: 1, to: 99, main: "12x12 cm", extra: ["6x6 cm", "12x12 cm"], coOptional: true },
@@ -339,7 +366,7 @@ const T = {
     secRace:"Võistlus",secMachine:"Masin",secCrew:"Meeskond",secContact:"Kontakt",secNumbers:"Stardinumbrid",
     fNr:"Võistlusnumber",fClass:"Võistlusklass",fTeam:"Võistkond",fMachine:"Masin",fVin:"VIN",fReg:"Reg. nr",
     fDriver:"Juht",fCo:"Kaasvõistleja",coHint:"ATV klassis ei ole kohustuslik.",fNote:"Märkus",fCountry:"Riik",fEmail:"E-post",fPhone:"GSM",phoneHint:"Koos riigikoodiga, nt +372 5123 4567",fAddress:"Aadress",
-    fMain:"Põhinumber, 2 tk:",mainFree:"Põhinumbrid on registreerunutele tasuta.",fExtra:"Lisanumbrite tellimus",price:p=>`Hind ${p} € / tk`,qty:"tk",
+    fMain:"Põhinumber, 2 tk:",mainFree:"Põhinumbrid on registreerunutele tasuta.",fExtra:"Lisanumbrite tellimus",unit:p=>`${p} € / tk`,qty:"tk",total:"Lisanumbrid kokku",payee:"Saaja",regCode:"Reg. nr",vat:"KMKR",payRef:"Selgitus",contact:"Kontakt",copy:"Kopeeri",copied:"Kopeeritud",invoice:"Soovin maksta arvega",payLead:n=>`Kanna ${n} € alljärgnevale kontole:`,donePay:(n,r)=>`Lisanumbrite eest tasu ${n} € Printwell OÜ kontole EE692200221026598634, selgitus „${r}”.`,doneInvoice:n=>`Valisid lisanumbrite (${n} €) eest arvega maksmise.`,
     pickClassFirst:"Vali kõigepealt võistlusklass.",
     phMachine:"nt Toyota Land Cruiser 80",phNote:"nt lisa kaasvõistleja autos",
     pickNr:"Vali number",pickClass:"Vali klass",freeCount:n=>`${n} vaba numbrit selles klassis`,
@@ -360,7 +387,7 @@ const T = {
     secRace:"Race",secMachine:"Vehicle",secCrew:"Crew",secContact:"Contact",secNumbers:"Race numbers",
     fNr:"Race number",fClass:"Class",fTeam:"Team",fMachine:"Vehicle",fVin:"VIN",fReg:"Reg. no",
     fDriver:"Driver",fCo:"Co-driver",coHint:"Not required in the ATV class.",fNote:"Notes",fCountry:"Country",fEmail:"E-mail",fPhone:"Mobile",phoneHint:"With country code, e.g. +372 5123 4567",fAddress:"Address",
-    fMain:"Main number, 2 pcs:",mainFree:"Main numbers are free for registered competitors.",fExtra:"Extra numbers order",price:p=>`Price ${p} € / pc`,qty:"pcs",
+    fMain:"Main number, 2 pcs:",mainFree:"Main numbers are free for registered competitors.",fExtra:"Extra numbers order",unit:p=>`${p} € / pc`,qty:"pcs",total:"Extra numbers total",payee:"Payee",regCode:"Reg. no",vat:"VAT no",payRef:"Reference",contact:"Contact",copy:"Copy",copied:"Copied",invoice:"I want to pay by invoice",payLead:n=>`Transfer ${n} € to the account below:`,donePay:(n,r)=>`Pay ${n} € for extra numbers to Printwell OÜ, IBAN EE692200221026598634, reference “${r}”.`,doneInvoice:n=>`You chose to pay for the extra numbers (${n} €) by invoice.`,
     pickClassFirst:"Choose the class first.",
     phMachine:"e.g. Toyota Land Cruiser 80",phNote:"e.g. extra co-driver in the car",
     pickNr:"Choose number",pickClass:"Choose class",freeCount:n=>`${n} numbers free in this class`,
@@ -430,7 +457,6 @@ function applyLang(){
   document.querySelectorAll("[data-ph]").forEach(el=>el.placeholder=t(el.dataset.ph));
   $("lang-et").setAttribute("aria-pressed",lang==="et");$("lang-en").setAttribute("aria-pressed",lang==="en");
   $("submit-btn").textContent=mode==="new"?t("submitNew"):t("submitChange");
-  $("extra-price").textContent=t("price",CONFIG.EXTRA_PRICE);
   const c=$("f-class").value; fillClass(c); if(c) onClass($("f-nr").value, readExtras());
   $("demo-banner").hidden=!!CONFIG.API_URL;
   if(!$("view-list").hidden)loadList();
@@ -442,7 +468,7 @@ function fillClass(keep){
 function onClass(keepNr, keepExtras){
   const c=cls($("f-class").value), s=$("f-nr");
   if(!c){s.innerHTML=`<option value="">${t("pickNr")}</option>`;s.disabled=true;$("free-hint").textContent="";
-    $("main-size").textContent="–";$("extra-rows").innerHTML=`<span class="hint">${t("pickClassFirst")}</span>`;updatePlate();return}
+    $("main-size").textContent="–";$("extra-rows").innerHTML=`<span class="hint">${t("pickClassFirst")}</span>`;updatePlate();updateTotal();return}
   const own = mode==="change"&&auth?normNr(auth.nr):null;
   const all=numbersFor(c), free=all.filter(n=>!used.has(n)||n===own);
   s.disabled=false;
@@ -455,9 +481,17 @@ function onClass(keepNr, keepExtras){
   // numbrid
   $("main-size").textContent=c.main;
   const ex=keepExtras||{};
-  $("extra-rows").innerHTML=c.extra.map((size,i)=>`<label class="qty"><span class="num">${size}</span>
+  $("extra-rows").innerHTML=c.extra.map((size,i)=>`<label class="qty"><span class="qty-name"><span class="num">${size}</span><small>${t("unit",CONFIG.PRICES[size])}</small></span>
     <span class="qty-in"><input id="f-ex-${i}" type="number" min="0" max="99" step="1" value="${ex[size]||0}" data-size="${esc(size)}" class="num"> ${t("qty")}</span></label>`).join("");
-  updatePlate();
+  updatePlate();updateTotal();
+}
+function extrasTotal(m){return Object.entries(m).reduce((a,[s,q])=>a+(CONFIG.PRICES[s]||0)*q,0)}
+function payRef(){return [$("f-nr").value,$("f-team").value.trim()].filter(Boolean).join(" ")||"–"}
+function updateTotal(){
+  const sum=extrasTotal(readExtras());
+  $("extra-total").textContent=sum+" €";
+  $("pay").hidden=sum===0; if(sum===0)$("f-invoice").checked=false;
+  $("pay-lead").textContent=t("payLead",sum); $("pay-ref").textContent=payRef();
 }
 function readExtras(){const m={};$("extra-rows").querySelectorAll("input").forEach(i=>m[i.dataset.size]=Math.max(0,Math.min(99,parseInt(i.value)||0)));return m}
 function updatePlate(){const v=$("f-nr").value;$("plate").textContent=v||"–";$("plate").classList.toggle("empty",!v);
@@ -477,7 +511,8 @@ function readForm(){
   const c=cls($("f-class").value);
   const d={nr:$("f-nr").value,klass:$("f-class").value,website:$("f-hp").value};
   for(const[k,id]of Object.entries(FIELDS))d[k]=$(id).value.trim();
-  d.pohinumber=c?`${c.main} x 2`:""; d.lisanumbrid=fmtExtras(readExtras());
+  d.pohinumber=c?`${c.main} x 2`:""; const ex=readExtras(); d.lisanumbrid=fmtExtras(ex);
+  d.summa=extrasTotal(ex); d.arvega=$("f-invoice").checked&&d.summa>0?"Jah":"";
   return d;
 }
 function validate(){
@@ -494,7 +529,11 @@ $("lang-en").onclick=()=>{lang="en";applyLang()};
 $("mode-new").onclick=()=>setMode("new");
 $("mode-change").onclick=()=>setMode("change");
 $("f-class").onchange=()=>onClass(null, readExtras());
-$("f-nr").onchange=updatePlate;
+$("f-nr").onchange=()=>{updatePlate();updateTotal()};
+$("extra-rows").addEventListener("input",updateTotal);
+$("f-team").addEventListener("input",updateTotal);
+$("copy-iban").onclick=async()=>{const b=$("copy-iban");try{await navigator.clipboard.writeText("EE692200221026598634");b.textContent=t("copied")}
+  catch(x){const r=document.createRange();r.selectNodeContents(b.parentNode.firstChild);getSelection().removeAllRanges();getSelection().addRange(r)}};
 $("tab-form").onclick=()=>switchTab("form");
 $("tab-list").onclick=()=>switchTab("list");
 function switchTab(v){$("tab-form").setAttribute("aria-selected",v==="form");$("tab-list").setAttribute("aria-selected",v==="list");
@@ -519,6 +558,7 @@ $("lookup").onsubmit=async e=>{
   $("f-class").value=r.record.klass||"";
   onClass(normNr(r.record.nr), parseExtras(r.record.lisanumbrid));
   for(const[k,id]of Object.entries(FIELDS))if(r.record[k]!==undefined)$(id).value=r.record[k];
+  updateTotal(); $("f-invoice").checked=r.record.arvega==="Jah"&&!$("pay").hidden;
   $("reg").hidden=false;
 };
 
@@ -535,6 +575,8 @@ $("reg").onsubmit=async e=>{
     $("reg").hidden=true;$("lookup").hidden=true;$("done").hidden=false;
     $("done-plate").textContent=data.nr;$("done-plate").classList.toggle("long",data.nr.length>=4);$("done-title").textContent=mode==="new"?t("doneNew"):t("doneChange");
     $("done-text").textContent=t("doneText",data.nr,data.email);
+    const dp=$("done-pay"); dp.hidden=!data.summa;
+    dp.textContent=data.arvega?t("doneInvoice",data.summa):t("donePay",data.summa,[data.nr,data.voistkond].join(" "));
   }catch(x){msg.className="msg err";msg.textContent=t("fail")+" ("+x.message+")"}
   finally{btn.disabled=false;btn.textContent=mode==="new"?t("submitNew"):t("submitChange")}
 };
